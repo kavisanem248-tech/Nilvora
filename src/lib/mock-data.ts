@@ -518,7 +518,7 @@ export const INITIAL_PROPERTIES: PropertyItem[] = [
     furnishingStatus: 'unfurnished',
     amenities: ['30-ft Cement Concrete Roads', 'Avenue Tree Plantations', 'Underground Stormwater Drain', '24/7 Security & Gated Arch', 'Immediate Individual Patta Transfer'],
     images: [
-      'https://images.unsplash.com/photo-1524813686514-a57563d77d66?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=80',
       'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80',
     ],
     reels: [
@@ -527,7 +527,7 @@ export const INITIAL_PROPERTIES: PropertyItem[] = [
         propertyId: 'prop-8',
         mediaType: 'video_reel',
         url: 'https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-a-residential-suburb-with-houses-and-gardens-41666-large.mp4',
-        thumbnailUrl: 'https://images.unsplash.com/photo-1524813686514-a57563d77d66?auto=format&fit=crop&w=600&q=80',
+        thumbnailUrl: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=600&q=80',
         caption: 'Avadi 1200 sqft DTCP Plot Road & Layout Video',
         captionTa: 'ஆவடி 1200 சதுர அடி வீட்டு மனை வீடியோ பார்வை',
         category: 'exterior',

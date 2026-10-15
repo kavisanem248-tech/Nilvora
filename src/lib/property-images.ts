@@ -14,5 +14,9 @@ export function getPropertyTypeImage(propertyType: PropertyType): string {
 }
 
 export function getPropertyImage(property: Pick<PropertyItem, 'propertyType' | 'images'>, index = 0): string {
-  return property.images[index] || getPropertyTypeImage(property.propertyType);
+  const image = property.images[index];
+  if (!image || image.includes('photo-1524813686514-a57563d77d66')) {
+    return getPropertyTypeImage(property.propertyType);
+  }
+  return image;
 }
