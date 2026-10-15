@@ -15,7 +15,6 @@ import {
   Share2,
   Calendar,
   MessageSquare,
-  PlusCircle,
   ChevronDown,
   ChevronUp,
   MapPin,
@@ -88,12 +87,6 @@ export default function ReelsFeedPage() {
     return (
       <div className="min-h-[80vh] flex flex-col items-center justify-center p-8 text-center text-slate-400 space-y-4">
         <p className="text-lg font-bold text-white">No Property Reels Active</p>
-        <Link
-          href="/reels/studio"
-          className="px-6 py-2.5 rounded-xl bg-emerald-500 text-slate-950 font-bold text-xs"
-        >
-          Create First Property Reel in Studio
-        </Link>
       </div>
     );
   }
@@ -107,16 +100,6 @@ export default function ReelsFeedPage() {
           <span>Reels Feed</span>
           <span className="text-slate-400">• {currentIndex + 1} of {propertiesWithReels.length}</span>
         </div>
-      </div>
-
-      <div className="absolute top-4 right-4 z-30 flex items-center gap-2">
-        <Link
-          href="/reels/studio"
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500 text-slate-950 font-bold text-xs shadow-lg hover:bg-emerald-400 transition"
-        >
-          <PlusCircle className="w-3.5 h-3.5" />
-          <span>Seller Studio</span>
-        </Link>
       </div>
 
       {/* Vertical Video Phone Frame Container */}
