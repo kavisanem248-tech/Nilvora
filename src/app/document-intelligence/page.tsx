@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { processDocumentAI } from '@/lib/ai/document-processor';
 import { DocumentAnalysisResult } from '@/types';
 import { nilvoraStore } from '@/lib/store';
+import { requireSignedInForAction } from '@/lib/auth/client-session';
 import {
   FileCheck,
   Upload,
@@ -27,6 +28,7 @@ export default function DocumentIntelligencePage() {
 
   const handleScan = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!await requireSignedInForAction()) return;
     setIsProcessing(true);
     try {
       const result = await processDocumentAI(fileName, selectedCategory);

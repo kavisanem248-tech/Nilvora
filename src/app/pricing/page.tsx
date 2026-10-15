@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { PaymentOrder, PropertyItem, UserRole } from '@/types';
 import { RevenueService } from '@/lib/payments/catalog';
+import { requireSignedInForAction } from '@/lib/auth/client-session';
 import { Film, ShieldCheck } from 'lucide-react';
 
 type RazorpayCheckoutResponse = {
@@ -143,8 +144,9 @@ export default function PricingPage() {
   }, [accountId, activeRole, properties]);
 
   const handlePayment = async (service: RevenueService) => {
+    if (!await requireSignedInForAction()) return;
     if (!role) {
-      setMessage('Sign in with the matching account role to continue.');
+      setMessage('Your account role cannot use this service. Sign in with the matching account.');
       return;
     }
     if (service.propertyRequired && !selectedPropertyId) {

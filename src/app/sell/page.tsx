@@ -7,6 +7,7 @@ import { PropertyItem, PropertyType, ListingType } from '@/types';
 import { nilvoraStore } from '@/lib/store';
 import { INITIAL_BROKERS } from '@/lib/mock-data';
 import { checkListingCompliance } from '@/lib/compliance/rules';
+import { requireSignedInForAction } from '@/lib/auth/client-session';
 import {
   Check,
   Building,
@@ -122,6 +123,7 @@ export default function SellPropertyPage() {
 
   const handleFinalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!await requireSignedInForAction()) return;
     setIsSubmitting(true);
 
     const newPropertyId = `prop-${Date.now()}`;
@@ -222,7 +224,7 @@ export default function SellPropertyPage() {
         <div className="surface-3d space-y-4 p-8">
           <h1 className="text-2xl font-black text-black">Sign in to list a property</h1>
           <p className="text-sm text-black/65">Property owners, brokers, and admins can create listings.</p>
-          <Link href="/login" className="inline-flex rounded-lg border border-black/10 bg-white px-4 py-2.5 text-sm font-bold text-black shadow-sm">
+          <Link href={`/login?returnTo=${encodeURIComponent('/sell')}`} className="inline-flex rounded-lg border border-black/10 bg-white px-4 py-2.5 text-sm font-bold text-black shadow-sm">
             Sign in
           </Link>
         </div>

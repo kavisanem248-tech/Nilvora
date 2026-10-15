@@ -5,11 +5,11 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { PropertyItem, BrokerProfile } from '@/types';
 import { nilvoraStore } from '@/lib/store';
-import { INITIAL_BROKERS } from '@/lib/mock-data';
 import { getPropertyImage, getPropertyTypeImage } from '@/lib/property-images';
 import { TrustBadge } from '@/components/ui/TrustBadge';
 import { VisitModal } from '@/components/ui/VisitModal';
 import { calculateTamilNaduRegistrationCharges } from '@/lib/compliance/rules';
+import { requireSignedInForAction } from '@/lib/auth/client-session';
 import {
   Bed,
   Bath,
@@ -39,7 +39,11 @@ function PropertyDetailContent() {
   const propertyId = (routerParams?.id as string) || 'prop-1';
 
   const [property, setProperty] = useState<PropertyItem | null>(null);
-  const [assignedBroker, setAssignedBroker] = useState<BrokerProfile | null>(null);
+  const [brokerDetails, setBrokerDetails] = useState<{
+    propertyId: string;
+    profile: Pick<BrokerProfile, 'fullName' | 'avatarUrl' | 'agencyName' | 'reraNumber' | 'rating' | 'experienceYears' | 'totalDealsClosed'>;
+  } | null>(null);
+  const [brokerAccessState, setBrokerAccessState] = useState<'checking' | 'locked' | 'available' | 'error' | 'unavailable'>('checking');
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [showVisitModal, setShowVisitModal] = useState(false);
   const [showOfferModal, setShowOfferModal] = useState(false);
@@ -60,10 +64,36 @@ function PropertyDetailContent() {
         if (liveProperty) {
           setProperty(liveProperty);
           setOfferAmount(liveProperty.price);
-          setAssignedBroker(INITIAL_BROKERS.find((broker) => broker.id === liveProperty.assignedBrokerId) || null);
         }
       })
       .catch((error: unknown) => console.warn('[NILVORA PROPERTY] Could not load published property:', error));
+    fetch(`/api/properties/${encodeURIComponent(propertyId)}/broker`, { cache: 'no-store' })
+      .then(async (response) => {
+        if (response.status === 404) {
+          setBrokerAccessState('unavailable');
+          return null;
+        }
+        if (!response.ok) throw new Error(`Broker access check failed (${response.status}).`);
+        return response.json() as Promise<{
+          success?: boolean;
+          subscriptionActive?: boolean;
+          broker?: Pick<BrokerProfile, 'fullName' | 'avatarUrl' | 'agencyName' | 'reraNumber' | 'rating' | 'experienceYears' | 'totalDealsClosed'>;
+        }>;
+      })
+      .then((result) => {
+        if (!result) return;
+        if (result.success && result.subscriptionActive && result.broker) {
+          setBrokerDetails({ propertyId, profile: result.broker });
+          setBrokerAccessState('available');
+        } else {
+          setBrokerDetails(null);
+          setBrokerAccessState('locked');
+        }
+      })
+      .catch((error: unknown) => {
+        console.warn('[NILVORA PROPERTY] Could not verify broker subscription access:', error);
+        setBrokerAccessState('error');
+      });
     fetch(`/api/properties/${encodeURIComponent(propertyId)}/like`, { cache: 'no-store' })
       .then(async (response) => response.ok ? response.json() as Promise<{ likesCount: number; liked: boolean }> : null)
       .then((result) => {
@@ -82,6 +112,7 @@ function PropertyDetailContent() {
   const handleToggleLike = async () => {
     setLikeMessage('');
     try {
+      if (!await requireSignedInForAction()) return;
       const response = await fetch(`/api/properties/${encodeURIComponent(propertyId)}/like`, { method: 'POST' });
       const result = await response.json() as { success?: boolean; error?: string; liked?: boolean; likesCount?: number };
       if (!response.ok || result.success !== true) throw new Error(result.error || 'Could not update property like.');
@@ -110,9 +141,11 @@ function PropertyDetailContent() {
   };
 
   const regCharges = calculateTamilNaduRegistrationCharges(property.price, property.propertyType);
+  const assignedBroker = brokerDetails?.propertyId === propertyId ? brokerDetails.profile : null;
 
-  const handleOfferSubmit = (e: React.FormEvent) => {
+  const handleOfferSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!await requireSignedInForAction()) return;
     nilvoraStore.addOffer({
       propertyId: property.id,
       propertyTitle: property.title,
@@ -161,7 +194,8 @@ function PropertyDetailContent() {
 
         <div className="flex items-center gap-2">
           <button
-            onClick={() => {
+            onClick={async () => {
+              if (!await requireSignedInForAction()) return;
               nilvoraStore.toggleSaveProperty(property.id);
               setIsSaved(!isSaved);
             }}
@@ -310,7 +344,9 @@ function PropertyDetailContent() {
             {/* Actions */}
             <div className="space-y-2 pt-2">
               <button
-                onClick={() => setShowVisitModal(true)}
+                onClick={async () => {
+                  if (await requireSignedInForAction()) setShowVisitModal(true);
+                }}
                 className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-extrabold text-xs sm:text-sm hover:from-emerald-400 hover:to-teal-400 transition shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2"
               >
                 <Calendar className="w-4 h-4" />
@@ -318,7 +354,9 @@ function PropertyDetailContent() {
               </button>
 
               <button
-                onClick={() => setShowOfferModal(true)}
+                onClick={async () => {
+                  if (await requireSignedInForAction()) setShowOfferModal(true);
+                }}
                 className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs transition flex items-center justify-center gap-2"
               >
                 <Tag className="w-4 h-4 text-amber-400" />
@@ -369,8 +407,10 @@ function PropertyDetailContent() {
           </div>
 
           {/* Assigned Broker Partner Card */}
-          {assignedBroker && (
+          {property.assignedBrokerId && brokerAccessState !== 'unavailable' && (
             <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 space-y-4">
+              {assignedBroker ? (
+                <>
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
                   Assigned Transaction Broker
@@ -405,6 +445,12 @@ function PropertyDetailContent() {
                 ) : (
                   <Link
                     href={`/pricing?service=buyer-contact-unlock&propertyId=${encodeURIComponent(property.id)}`}
+                    onClick={async (event) => {
+                      event.preventDefault();
+                      if (await requireSignedInForAction()) {
+                        window.location.assign(`/pricing?service=buyer-contact-unlock&propertyId=${encodeURIComponent(property.id)}`);
+                      }
+                    }}
                     className="flex-1 rounded-xl border border-blue-500/40 bg-blue-500/10 py-2 text-center text-xs font-bold text-blue-200 hover:bg-blue-500/20"
                   >
                     Unlock Property Owner Contact
@@ -417,6 +463,36 @@ function PropertyDetailContent() {
                   Schedule Visit
                 </button>
               </div>
+                </>
+              ) : (
+                <>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300 px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20">
+                    Buyer Premium
+                  </span>
+                  <div>
+                    <h4 className="font-bold text-white text-sm">Broker details are members-only</h4>
+                    <p className="mt-1 text-xs text-slate-400">
+                      Subscribe to Buyer Premium to view the assigned broker’s profile and details.
+                    </p>
+                    {brokerAccessState === 'checking' && <p className="mt-2 text-xs text-slate-500">Checking subscription…</p>}
+                    {brokerAccessState === 'error' && <p role="alert" className="mt-2 text-xs text-rose-300">Could not verify subscription access. Please refresh and try again.</p>}
+                  </div>
+                  <div className="flex items-center gap-2 pt-2">
+                    <Link
+                      href="/pricing?service=buyer-premium-monthly"
+                      className="flex-1 rounded-xl bg-blue-500 py-2 text-center text-xs font-bold text-white hover:bg-blue-400"
+                    >
+                      View Subscription Plans
+                    </Link>
+                    <button
+                      onClick={() => setShowVisitModal(true)}
+                      className="flex-1 py-2 rounded-xl bg-emerald-500 text-slate-950 font-bold text-xs hover:bg-emerald-400 transition"
+                    >
+                      Schedule Visit
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           )}
 

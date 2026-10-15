@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { PropertyItem } from '@/types';
 import { nilvoraStore } from '@/lib/store';
+import { requireSignedInForAction } from '@/lib/auth/client-session';
 import { parseNaturalLanguageQuery } from '@/lib/ai/tamil-query-parser';
 import { ArrowRight, Send, X } from 'lucide-react';
 
@@ -51,6 +52,7 @@ export const FloatingAIChat: React.FC = () => {
 
   const sendMessage = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (!await requireSignedInForAction()) return;
     const query = input.trim();
     if (!query || isLoading) return;
 

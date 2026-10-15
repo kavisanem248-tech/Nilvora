@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { getSession } from '@/lib/auth/session';
+import { getRequestSession } from '@/lib/auth/request-session';
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
@@ -12,9 +12,10 @@ const PRIVATE_DOCS_DIR = path.join(process.cwd(), '.data', 'documents');
 
 export async function POST(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization');
-    const token = authHeader?.replace(/^Bearer\s+/i, '') || request.headers.get('x-nilvora-token');
-    const session = getSession(token);
+    const session = getRequestSession(request);
+    if (!session) {
+      return NextResponse.json({ success: false, error: 'Sign in to upload property documents.' }, { status: 401 });
+    }
 
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
@@ -62,7 +63,7 @@ export async function POST(request: NextRequest) {
 
     // 6. Log Document Upload in Audit Ledger
     db.addAuditLog({
-      userId: session?.user.id || 'anonymous_uploader',
+      userId: session.user.id,
       action: 'DOCUMENT_UPLOADED_PRIVATE',
       resource: 'property_documents',
       resourceId: storageId,

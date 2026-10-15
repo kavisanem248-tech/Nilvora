@@ -31,9 +31,9 @@ export const REVENUE_SERVICES: RevenueService[] = [
     purpose: 'buyer_premium',
     role: 'buyer',
     name: 'Buyer Premium Membership',
-    price: 0,
+    price: 870,
     period: 'per month',
-    description: 'Optional membership; price must be configured by an administrator.',
+    description: 'Buyer Premium membership with access to assigned broker profile details.',
     serviceStatus: 'active',
   },
   {

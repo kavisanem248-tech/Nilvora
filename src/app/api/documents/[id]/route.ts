@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth/session';
+import { getRequestSession } from '@/lib/auth/request-session';
 import fs from 'fs';
 import path from 'path';
 
@@ -11,9 +11,9 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const authHeader = request.headers.get('authorization');
-    const token = authHeader?.replace(/^Bearer\s+/i, '') || request.headers.get('x-nilvora-token');
-    const session = getSession(token);
+    if (!getRequestSession(request)) {
+      return NextResponse.json({ success: false, error: 'Sign in to access property documents.' }, { status: 401 });
+    }
 
     // Sanitize storage identifier to prevent directory traversal
     const safeFilename = path.basename(id);

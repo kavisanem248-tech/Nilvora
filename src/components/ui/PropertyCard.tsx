@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { PropertyItem } from '@/types';
+import { requireSignedInForAction } from '@/lib/auth/client-session';
 import { getPropertyImage, getPropertyTypeImage } from '@/lib/property-images';
 import { TrustBadge } from './TrustBadge';
 import { nilvoraStore } from '@/lib/store';
@@ -27,6 +28,7 @@ interface PropertyCardProps {
 export const PropertyCard: React.FC<PropertyCardProps> = ({ property, onQuickVisit, isDemo = false }) => {
   const [isSaved, setIsSaved] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [shareError, setShareError] = useState('');
 
   const formatPrice = (price: number) => {
     if (price >= 10000000) {
@@ -35,20 +37,32 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({ property, onQuickVis
     return `₹${(price / 100000).toFixed(1)} Lakhs`;
   };
 
-  const handleToggleSave = (e: React.MouseEvent) => {
+  const handleToggleSave = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (!await requireSignedInForAction()) return;
     nilvoraStore.toggleSaveProperty(property.id);
     setIsSaved(!isSaved);
   };
 
-  const handleShare = (e: React.MouseEvent) => {
+  const handleQuickVisit = async () => {
+    if (!await requireSignedInForAction()) return;
+    onQuickVisit?.(property);
+  };
+
+  const handleShare = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (!await requireSignedInForAction()) return;
+    setShareError('');
     if (typeof window !== 'undefined') {
-      navigator.clipboard.writeText(`${window.location.origin}/property/${property.id}`);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      try {
+        await navigator.clipboard.writeText(`${window.location.origin}/property/${property.id}`);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch {
+        setShareError('Could not copy the link. Check browser clipboard permissions.');
+      }
     }
   };
 
@@ -119,9 +133,9 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({ property, onQuickVis
         )}
 
         {/* Copied notification */}
-        {copied && (
-          <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/75 text-xs font-bold text-white backdrop-blur-sm">
-            Link copied to clipboard!
+        {(copied || shareError) && (
+          <div role={shareError ? 'alert' : 'status'} className="absolute inset-0 z-20 flex items-center justify-center bg-black/75 px-4 text-center text-xs font-bold text-white backdrop-blur-sm">
+            {shareError || 'Link copied to clipboard!'}
           </div>
         )}
       </div>
@@ -205,7 +219,7 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({ property, onQuickVis
             {onQuickVisit && (
               <button
                 type="button"
-                onClick={() => onQuickVisit(property)}
+                onClick={() => void handleQuickVisit()}
                 className="rounded-lg border border-black/10 bg-white p-2 text-black shadow-sm transition hover:-translate-y-0.5"
                 title="Schedule a Site Visit"
               >

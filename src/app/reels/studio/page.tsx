@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { PropertyItem } from '@/types';
+import { requireSignedInForAction } from '@/lib/auth/client-session';
 import {
   Sparkles,
   CheckCircle2,
@@ -33,22 +34,28 @@ export default function ReelsStudioPage() {
   const [publishedSuccess, setPublishedSuccess] = useState(false);
 
   useEffect(() => {
-    fetch('/api/portal', { cache: 'no-store' })
-      .then(async (response) => {
+    let current = true;
+    const loadProperties = async () => {
+      if (!await requireSignedInForAction()) return;
+      try {
+        const response = await fetch('/api/portal', { cache: 'no-store' });
         const data = await response.json();
-        if (!response.ok || data.success !== true) throw new Error(data.error || 'Sign in to upload property reels.');
-        return data;
-      })
-      .then((data) => {
+        if (!response.ok || data.success !== true) throw new Error(data.error || 'Unable to load your properties.');
+        if (!current) return;
         setAccountRole(data.user.role);
         const list = data.properties as PropertyItem[];
         setProperties(list);
         if (list.length > 0) setSelectedPropertyId(list[0].id);
-      })
-      .catch((error: unknown) => setPageError(error instanceof Error ? error.message : 'Unable to load your properties.'));
+      } catch (error) {
+        if (current) setPageError(error instanceof Error ? error.message : 'Unable to load your properties.');
+      }
+    };
+    void loadProperties();
+    return () => { current = false; };
   }, []);
 
-  const handleGenerateAICaptions = () => {
+  const handleGenerateAICaptions = async () => {
+    if (!await requireSignedInForAction()) return;
     setIsGeneratingAI(true);
     setTimeout(() => {
       const selectedProp = properties.find((property) => property.id === selectedPropertyId);
@@ -66,6 +73,7 @@ export default function ReelsStudioPage() {
 
   const handlePublishReel = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!await requireSignedInForAction()) return;
     const selectedProperty = properties.find((property) => property.id === selectedPropertyId);
     if (!selectedProperty) {
       setPageError('Select one of your properties before publishing a reel.');

@@ -7,6 +7,7 @@ import { PropertyItem } from '@/types';
 import { nilvoraStore } from '@/lib/store';
 import { calculateTamilNaduRegistrationCharges } from '@/lib/compliance/rules';
 import VisitModal from '@/components/ui/VisitModal';
+import { requireSignedInForAction } from '@/lib/auth/client-session';
 import { 
   Scale, 
   Plus, 
@@ -39,14 +40,16 @@ function CompareContent() {
 
   const comparedProperties = allProperties.filter((p) => selectedIds.includes(p.id));
 
-  const handleAddProperty = (id: string) => {
+  const handleAddProperty = async (id: string) => {
     if (!id) return;
+    if (!await requireSignedInForAction()) return;
     setSelectedIds((currentIds) =>
       currentIds.length < 4 && !currentIds.includes(id) ? [...currentIds, id] : currentIds
     );
   };
 
-  const handleRemoveProperty = (id: string) => {
+  const handleRemoveProperty = async (id: string) => {
+    if (!await requireSignedInForAction()) return;
     setSelectedIds((currentIds) => currentIds.filter((propertyId) => propertyId !== id));
   };
 
@@ -86,7 +89,7 @@ function CompareContent() {
               <select
                 onChange={(e) => {
                   if (e.target.value) {
-                    handleAddProperty(e.target.value);
+                    void handleAddProperty(e.target.value);
                     e.target.value = '';
                   }
                 }}
@@ -127,7 +130,7 @@ function CompareContent() {
                   <th key={prop.id} className="p-4 text-left min-w-[280px] bg-[#172642] border-b border-r border-slate-800 relative">
                     <button
                       type="button"
-                      onClick={() => handleRemoveProperty(prop.id)}
+                      onClick={() => void handleRemoveProperty(prop.id)}
                       aria-label={`Remove ${prop.title} from comparison`}
                       className="absolute top-3 right-3 inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800/90 px-2 py-1.5 text-xs font-semibold text-slate-300 transition hover:border-rose-500/50 hover:bg-rose-500/20 hover:text-rose-300"
                       title="Remove from comparison"

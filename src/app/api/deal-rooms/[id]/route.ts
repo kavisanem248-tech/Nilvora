@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { getSession } from '@/lib/auth/session';
+import { getRequestSession } from '@/lib/auth/request-session';
 import { canAccessDealRoom } from '@/lib/auth/rbac';
 
 export async function GET(
@@ -8,9 +8,10 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const authHeader = request.headers.get('authorization');
-  const token = authHeader?.replace(/^Bearer\s+/i, '') || request.headers.get('x-nilvora-token');
-  const session = getSession(token);
+  const session = getRequestSession(request);
+  if (!session) {
+    return NextResponse.json({ success: false, error: 'Sign in to access this Deal Room.' }, { status: 401 });
+  }
 
   const dealRoom = db.getDealRoomById(id);
   if (!dealRoom) {
@@ -18,7 +19,7 @@ export async function GET(
   }
 
   // Permission Guard: Only Buyer, Seller, Assigned Broker, or Admin can access
-  if (session && !canAccessDealRoom(session.user.id, session.user.role, dealRoom)) {
+  if (!canAccessDealRoom(session.user.id, session.user.role, dealRoom)) {
     return NextResponse.json(
       { success: false, error: 'Unauthorized: You are not an authorized participant in this Deal Room.' },
       { status: 403 }
@@ -50,16 +51,17 @@ export async function PATCH(
 ) {
   try {
     const { id } = await params;
-    const authHeader = request.headers.get('authorization');
-    const token = authHeader?.replace(/^Bearer\s+/i, '') || request.headers.get('x-nilvora-token');
-    const session = getSession(token);
+    const session = getRequestSession(request);
+    if (!session) {
+      return NextResponse.json({ success: false, error: 'Sign in to update Deal Room milestones.' }, { status: 401 });
+    }
 
     const dealRoom = db.getDealRoomById(id);
     if (!dealRoom) {
       return NextResponse.json({ success: false, error: 'Deal Room not found.' }, { status: 404 });
     }
 
-    if (session && !canAccessDealRoom(session.user.id, session.user.role, dealRoom)) {
+    if (!canAccessDealRoom(session.user.id, session.user.role, dealRoom)) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized: You are not authorized to modify milestones in this Deal Room.' },
         { status: 403 }
@@ -91,7 +93,7 @@ export async function PATCH(
     const updated = db.updateDealRoom(id, updates);
 
     db.addAuditLog({
-      userId: session?.user.id || 'deal_room_actor',
+      userId: session.user.id,
       action: 'DEAL_ROOM_MILESTONE_UPDATED',
       resource: 'deal_rooms',
       resourceId: id,

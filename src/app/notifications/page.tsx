@@ -2,6 +2,7 @@
 
 import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
+import { SessionGuard } from '@/components/auth/SessionGuard';
 import { 
   Bell, 
   CheckCircle2, 
@@ -266,7 +267,7 @@ function NotificationsContent() {
 export default function NotificationsPage() {
   return (
     <Suspense fallback={<div className="min-h-screen bg-[#0B132B] flex items-center justify-center text-white">Loading alerts...</div>}>
-      <NotificationsContent />
+      <SessionGuard><NotificationsContent /></SessionGuard>
     </Suspense>
   );
 }

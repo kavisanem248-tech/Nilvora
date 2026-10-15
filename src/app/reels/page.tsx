@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { PropertyItem } from '@/types';
 import { nilvoraStore } from '@/lib/store';
+import { requireSignedInForAction } from '@/lib/auth/client-session';
 import { TrustBadge } from '@/components/ui/TrustBadge';
 import { VisitModal } from '@/components/ui/VisitModal';
 import {
@@ -77,8 +78,9 @@ export default function ReelsFeedPage() {
     setIsMuted(!isMuted);
   };
 
-  const handleToggleSave = () => {
+  const handleToggleSave = async () => {
     if (!currentProperty) return;
+    if (!await requireSignedInForAction()) return;
     nilvoraStore.toggleSaveProperty(currentProperty.id);
     setIsSaved(!isSaved);
   };
@@ -157,7 +159,9 @@ export default function ReelsFeedPage() {
           </button>
 
           <button
-            onClick={() => setSelectedVisitProperty(currentProperty)}
+            onClick={async () => {
+              if (await requireSignedInForAction()) setSelectedVisitProperty(currentProperty);
+            }}
             className="flex flex-col items-center gap-1 group"
           >
             <div className="w-11 h-11 rounded-full bg-emerald-500 text-slate-950 font-bold flex items-center justify-center group-hover:scale-110 transition shadow-lg shadow-emerald-500/25">

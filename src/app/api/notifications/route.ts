@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { getSession } from '@/lib/auth/session';
+import { getRequestSession } from '@/lib/auth/request-session';
 
 export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-  const token = authHeader?.replace(/^Bearer\s+/i, '') || request.headers.get('x-nilvora-token');
-  const session = getSession(token);
+  const session = getRequestSession(request);
+  if (!session) {
+    return NextResponse.json({ success: false, error: 'Sign in to view notifications.' }, { status: 401 });
+  }
 
-  const userId = session?.user.id || 'user-default-1';
-  let notifs = db.getData().notifications;
+  const userId = session.user.id;
+  let notifs = db.getData().notifications.filter((notification) => notification.userId === userId);
 
   if (notifs.length === 0) {
     // Populate default seed notifications if empty
@@ -47,7 +48,7 @@ export async function GET(request: NextRequest) {
         createdAt: 'Yesterday',
       },
     ];
-    db.getData().notifications = notifs;
+    db.getData().notifications = [...db.getData().notifications, ...notifs];
   }
 
   return NextResponse.json({
@@ -58,12 +59,19 @@ export async function GET(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
+  const session = getRequestSession(request);
+  if (!session) {
+    return NextResponse.json({ success: false, error: 'Sign in to update notifications.' }, { status: 401 });
+  }
+
   try {
     const body = await request.json();
     const { id, markAllRead } = body;
 
     if (markAllRead) {
-      db.getData().notifications = db.getData().notifications.map((n) => ({ ...n, isRead: true }));
+      db.getData().notifications = db.getData().notifications.map((notification) =>
+        notification.userId === session.user.id ? { ...notification, isRead: true } : notification
+      );
       return NextResponse.json({ success: true, message: 'All notifications marked as read.' });
     }
 
@@ -71,7 +79,9 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'id is required' }, { status: 400 });
     }
 
-    const notif = db.getData().notifications.find((n) => n.id === id);
+    const notif = db.getData().notifications.find((notification) =>
+      notification.id === id && notification.userId === session.user.id
+    );
     if (notif) {
       notif.isRead = true;
     }

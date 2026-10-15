@@ -29,6 +29,23 @@ export async function GET(request: NextRequest) {
     const createdAt = new Date(payment.paidAt || payment.createdAt);
     return createdAt.getFullYear() === thisMonth.getFullYear() && createdAt.getMonth() === thisMonth.getMonth();
   });
+  const revenueByMonth = Array.from({ length: 6 }, (_, index) => {
+    const monthDate = new Date(thisMonth.getFullYear(), thisMonth.getMonth() - 5 + index, 1);
+    const year = monthDate.getFullYear();
+    const month = monthDate.getMonth();
+    const key = `${year}-${String(month + 1).padStart(2, '0')}`;
+    const revenue = revenuePayments.reduce((total, payment) => {
+      const paidAt = new Date(payment.paidAt || payment.createdAt);
+      return paidAt.getFullYear() === year && paidAt.getMonth() === month
+        ? total + payment.amount
+        : total;
+    }, 0);
+    return {
+      key,
+      label: monthDate.toLocaleDateString('en-IN', { month: 'short', year: '2-digit' }),
+      revenue,
+    };
+  });
   const revenueByRole = Object.fromEntries(['buyer', 'seller', 'broker'].map((role) => [
     role,
     revenuePayments
@@ -57,6 +74,7 @@ export async function GET(request: NextRequest) {
   }));
   return NextResponse.json({
     success: true,
+    generatedAt: new Date().toISOString(),
     user: {
       id: session.user.id,
       fullName: session.user.fullName,
@@ -85,6 +103,7 @@ export async function GET(request: NextRequest) {
     payments,
     revenueByRole,
     revenueByService,
+    revenueByMonth,
     services: getRevenueCatalog(data.settings),
     commissions: data.commissionLedger,
     auditLogs: data.auditLogs,

@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { PropertyItem } from '@/types';
+import { requireSignedInForAction } from '@/lib/auth/client-session';
 import { Calendar, Clock, CheckCircle2, X, ShieldAlert } from 'lucide-react';
 
 interface VisitModalProps {
@@ -24,6 +25,7 @@ export const VisitModal: React.FC<VisitModalProps> = ({ property, onClose }) => 
     setError('');
     setIsSubmitting(true);
     try {
+      if (!await requireSignedInForAction()) return;
       const scheduledTime = new Date(`${date}T${timeSlot}:00`).toISOString();
       const response = await fetch('/api/appointments', {
         method: 'POST',

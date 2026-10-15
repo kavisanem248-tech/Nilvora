@@ -7,6 +7,7 @@ import { PropertyItem } from '@/types';
 import { nilvoraStore } from '@/lib/store';
 import PropertyCard from '@/components/ui/PropertyCard';
 import VisitModal from '@/components/ui/VisitModal';
+import { requireSignedInForAction } from '@/lib/auth/client-session';
 import { 
   Building2, 
   ShieldCheck, 
@@ -56,7 +57,8 @@ function NewProjectsContent() {
     });
   }, [properties, localityFilter, bhkFilter]);
 
-  const handleDownloadBrochure = (projectName: string) => {
+  const handleDownloadBrochure = async (projectName: string) => {
+    if (!await requireSignedInForAction()) return;
     setDownloadToast(`Brochure and Floor Plans for "${projectName}" downloaded successfully!`);
     setTimeout(() => setDownloadToast(null), 4000);
   };

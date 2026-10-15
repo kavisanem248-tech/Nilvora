@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { PropertyItem, UserRole } from '@/types';
 import { nilvoraStore } from '@/lib/store';
+import { requireSignedInForAction } from '@/lib/auth/client-session';
 import { PropertyCard } from '@/components/ui/PropertyCard';
 import { TamilQueryBar } from '@/components/ui/TamilQueryBar';
 import { VisitModal } from '@/components/ui/VisitModal';
@@ -65,7 +66,8 @@ export default function HomePage() {
     return () => unsubscribe();
   }, []);
 
-  const handleRoleChange = (role: UserRole) => {
+  const handleRoleChange = async (role: UserRole) => {
+    if (!await requireSignedInForAction()) return;
     nilvoraStore.setRole(role);
     setRoleMenuOpen(false);
   };
@@ -144,7 +146,9 @@ export default function HomePage() {
               </Link>
               <div className="relative">
                 <button
-                  onClick={() => setRoleMenuOpen(!roleMenuOpen)}
+                  onClick={async () => {
+                    if (await requireSignedInForAction()) setRoleMenuOpen(!roleMenuOpen);
+                  }}
                   className="inline-flex items-center gap-1.5 rounded-lg border border-black/10 bg-white px-3 py-2 font-semibold text-black transition hover:bg-black/5"
                   aria-expanded={roleMenuOpen}
                 >
@@ -160,7 +164,7 @@ export default function HomePage() {
                     {ROLE_OPTIONS.map((role) => (
                       <button
                         key={role.key}
-                        onClick={() => handleRoleChange(role.key)}
+                        onClick={() => void handleRoleChange(role.key)}
                         className={`flex w-full items-center justify-between px-3 py-2 text-left text-xs transition hover:bg-black/5 ${
                           currentRole === role.key ? 'font-semibold text-black' : 'text-black/75'
                         }`}

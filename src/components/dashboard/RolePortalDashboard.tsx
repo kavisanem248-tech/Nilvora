@@ -17,6 +17,7 @@ type PortalData = {
 };
 
 type AdminData = PortalData & {
+  generatedAt?: string;
   metrics?: Record<string, number>;
   users?: UserProfile[];
   auditLogs?: Array<{ id: string; userId: string; action: string; resource: string; resourceId?: string; timestamp: string }>;
@@ -24,6 +25,7 @@ type AdminData = PortalData & {
   services?: RevenueService[];
   revenueByRole?: Record<string, number>;
   revenueByService?: Record<string, number>;
+  revenueByMonth?: Array<{ key: string; label: string; revenue: number }>;
 };
 
 function formatCurrency(amount: number) {
@@ -37,6 +39,9 @@ export function RolePortalDashboard({ role }: { role: 'seller' | 'broker' | 'adm
   const [error, setError] = useState('');
   const [busy, setBusy] = useState('');
   const [message, setMessage] = useState('');
+  const [paymentSearch, setPaymentSearch] = useState('');
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState('all');
+  const [paymentDateRange, setPaymentDateRange] = useState('all');
 
   const load = useCallback(async () => {
     try {
@@ -81,6 +86,57 @@ export function RolePortalDashboard({ role }: { role: 'seller' | 'broker' | 'adm
   const pendingProperties = useMemo(() => properties.filter((property) => property.status === 'under_review'), [properties]);
   const totalViews = properties.reduce((total, property) => total + property.viewsCount, 0);
   const totalLikes = properties.reduce((total, property) => total + (property.likesCount || 0), 0);
+  const maxServiceRevenue = Math.max(0, ...Object.values(adminData?.revenueByService || {}));
+  const maxMonthlyRevenue = Math.max(0, ...(adminData?.revenueByMonth || []).map((month) => month.revenue));
+  const generatedAt = adminData?.generatedAt;
+  const filteredPayments = useMemo(() => {
+    const search = paymentSearch.trim().toLowerCase();
+    const rangeStart = paymentDateRange === 'all'
+      ? null
+      : generatedAt
+        ? new Date(new Date(generatedAt).getTime() - Number(paymentDateRange) * 24 * 60 * 60 * 1000)
+        : null;
+
+    return payments.filter((payment) => {
+      if (paymentStatusFilter !== 'all' && payment.status !== paymentStatusFilter) return false;
+      const date = new Date(payment.paidAt || payment.createdAt);
+      if (rangeStart && date < rangeStart) return false;
+      if (!search) return true;
+      return [
+        payment.receiptNumber,
+        payment.id,
+        payment.purpose.replaceAll('_', ' '),
+        payment.itemId || '',
+        payment.userId,
+      ].some((value) => value.toLowerCase().includes(search));
+    });
+  }, [payments, paymentSearch, paymentStatusFilter, paymentDateRange, generatedAt]);
+
+  const exportFilteredPayments = () => {
+    const columns = ['Receipt', 'Order ID', 'Service', 'Amount INR', 'Status', 'DEMO', 'Date'];
+    const rows = filteredPayments.map((payment) => [
+      payment.receiptNumber,
+      payment.id,
+      payment.purpose.replaceAll('_', ' '),
+      payment.amount,
+      payment.status,
+      payment.isDemo ? 'Yes' : 'No',
+      payment.paidAt || payment.createdAt,
+    ]);
+    const csv = [columns, ...rows]
+      .map((row) => row.map((value) => {
+        const text = String(value);
+        const safeText = /^[\s]*[=+\-@]/.test(text) ? `'${text}` : text;
+        return `"${safeText.replaceAll('"', '""')}"`;
+      }).join(','))
+      .join('\r\n');
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'nilvora-payment-transactions.csv';
+    link.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 0);
+  };
 
   const submitAdminAction = async (data: Record<string, string | boolean>) => {
     setBusy(typeof data.action === 'string' ? data.action : 'update');
@@ -273,6 +329,36 @@ export function RolePortalDashboard({ role }: { role: 'seller' | 'broker' | 'adm
                   <Metric label="All transaction records" value={adminData?.metrics?.transactions || 0} admin />
                   <Metric label="Unpaid DEMO orders" value={adminData?.metrics?.demoOrders || 0} admin />
                 </div>
+                <div className="rounded-2xl border border-[#E2E8F0] bg-white p-5 sm:p-6">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <h3 className="text-base font-bold text-[#101B33]">Verified revenue trend</h3>
+                      <p className="mt-1 text-sm text-slate-500">Monthly provider-verified revenue for the last six months.</p>
+                    </div>
+                    <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">DEMO and unpaid orders excluded</span>
+                  </div>
+                  <div className="mt-6 grid h-52 grid-cols-6 items-end gap-2 sm:gap-4" role="img" aria-label="Verified revenue by month for the last six months">
+                    {(adminData?.revenueByMonth || []).map((month) => {
+                      const height = maxMonthlyRevenue > 0 ? (month.revenue / maxMonthlyRevenue) * 100 : 0;
+                      return (
+                        <div key={month.key} className="flex h-full min-w-0 flex-col items-center justify-end gap-2">
+                          <span className="max-w-full truncate text-center text-[10px] font-semibold text-slate-600 sm:text-xs">{formatCurrency(month.revenue)}</span>
+                          <div className="flex h-32 w-full items-end overflow-hidden rounded-t-lg bg-blue-50">
+                            <div
+                              className="w-full rounded-t-lg bg-[#315DE8] transition-all"
+                              style={{ height: `${height}%` }}
+                              title={`${month.label}: ${formatCurrency(month.revenue)}`}
+                            />
+                          </div>
+                          <span className="text-[10px] font-medium text-slate-500 sm:text-xs">{month.label}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {(adminData?.revenueByMonth || []).every((month) => month.revenue === 0) && (
+                    <p className="mt-3 text-center text-xs text-slate-500">No verified revenue recorded in this period.</p>
+                  )}
+                </div>
                 <div className="grid gap-5 xl:grid-cols-2">
                   <div className="rounded-2xl border border-[#E2E8F0] bg-[#FAFBFD] p-5 sm:p-6">
                     <h3 className="text-base font-bold text-[#101B33]">Revenue by account role</h3>
@@ -288,12 +374,21 @@ export function RolePortalDashboard({ role }: { role: 'seller' | 'broker' | 'adm
                   <div className="rounded-2xl border border-[#E2E8F0] bg-[#FAFBFD] p-5 sm:p-6">
                     <h3 className="text-base font-bold text-[#101B33]">Revenue by service</h3>
                     <ul className="mt-4 max-h-56 space-y-3 overflow-y-auto pr-2 text-sm">
-                      {(adminData?.services || []).map((service) => (
-                        <li key={service.id} className="flex justify-between gap-3 border-b border-slate-200 pb-3 last:border-0 last:pb-0">
-                          <span className="text-slate-600">{service.name}</span>
-                          <strong>{formatCurrency(adminData?.revenueByService?.[service.id] || 0)}</strong>
+                      {(adminData?.services || []).map((service) => {
+                        const revenue = adminData?.revenueByService?.[service.id] || 0;
+                        const share = maxServiceRevenue > 0 ? (revenue / maxServiceRevenue) * 100 : 0;
+                        return (
+                        <li key={service.id} className="border-b border-slate-200 pb-3 last:border-0 last:pb-0">
+                          <div className="flex justify-between gap-3">
+                            <span className="text-slate-600">{service.name}</span>
+                            <strong>{formatCurrency(revenue)}</strong>
+                          </div>
+                          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-200">
+                            <div className="h-full rounded-full bg-[#315DE8]" style={{ width: `${share}%` }} />
+                          </div>
                         </li>
-                      ))}
+                        );
+                      })}
                     </ul>
                   </div>
                 </div>
@@ -361,14 +456,53 @@ export function RolePortalDashboard({ role }: { role: 'seller' | 'broker' | 'adm
                     </li>)}</ul>}
               </section>
               <section id="payments" className="rounded-3xl border border-[#E2E8F0] bg-white p-6 shadow-sm sm:p-8">
-                <h2 className="mb-4 text-xl font-bold text-[#101B33]">Payment records</h2>
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div>
+                    <h2 className="text-xl font-bold text-[#101B33]">Payment records</h2>
+                    <p className="mt-1 text-sm text-slate-500">Search and filter all payment attempts. DEMO orders are clearly marked and never counted as revenue.</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={exportFilteredPayments}
+                    disabled={filteredPayments.length === 0}
+                    className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Export filtered CSV
+                  </button>
+                </div>
+                <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(220px,1fr)_180px_180px_auto]">
+                  <label className="sr-only" htmlFor="payment-search">Search payments</label>
+                  <input
+                    id="payment-search"
+                    type="search"
+                    value={paymentSearch}
+                    onChange={(event) => setPaymentSearch(event.target.value)}
+                    placeholder="Search receipt, service, order or user ID"
+                    className="rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none transition focus:border-[#315DE8]"
+                  />
+                  <label className="sr-only" htmlFor="payment-status">Filter by payment status</label>
+                  <select id="payment-status" value={paymentStatusFilter} onChange={(event) => setPaymentStatusFilter(event.target.value)} className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm">
+                    <option value="all">All statuses</option>
+                    {['created', 'processing', 'successful', 'failed', 'refunded'].map((status) => <option key={status} value={status}>{status[0].toUpperCase() + status.slice(1)}</option>)}
+                  </select>
+                  <label className="sr-only" htmlFor="payment-date-range">Filter payments by date</label>
+                  <select id="payment-date-range" value={paymentDateRange} onChange={(event) => setPaymentDateRange(event.target.value)} className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm">
+                    <option value="all">All time</option>
+                    <option value="30">Last 30 days</option>
+                    <option value="90">Last 90 days</option>
+                    <option value="365">Last 12 months</option>
+                  </select>
+                  <p className="self-center text-sm text-slate-500">{filteredPayments.length} of {payments.length} records</p>
+                </div>
+                <div className="mt-5">
                 <PaymentTable
-                  payments={payments}
+                  payments={filteredPayments}
                   admin
                   busy={busy}
                   onRefund={(id) => void refundPayment(id)}
                   onRevoke={(id) => void submitAdminAction({ action: 'revoke_service', paymentId: id })}
                 />
+                </div>
               </section>
               <section className="rounded-3xl border border-[#E2E8F0] bg-white p-6 shadow-sm sm:p-8">
                 <h2 className="mb-4 text-xl font-bold text-[#101B33]">Broker verification requests</h2>

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { PropertyItem } from '@/types';
 import { nilvoraStore } from '@/lib/store';
+import { requireSignedInForAction } from '@/lib/auth/client-session';
 import { parseNaturalLanguageQuery } from '@/lib/ai/tamil-query-parser';
 import {
   Sparkles,
@@ -54,6 +55,7 @@ export default function AIAssistantPage() {
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!await requireSignedInForAction()) return;
     if (!inputText.trim()) return;
 
     const userText = inputText;

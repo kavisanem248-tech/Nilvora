@@ -1,4 +1,6 @@
 import { GoogleGenAI } from '@google/genai';
+import { NextRequest, NextResponse } from 'next/server';
+import { getRequestSession } from '@/lib/auth/request-session';
 
 const MODEL = process.env.AI_MODEL_NAME?.trim() || 'gemini-3.8-flash';
 
@@ -10,7 +12,11 @@ export async function GET() {
   });
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  if (!getRequestSession(request)) {
+    return NextResponse.json({ error: 'Sign in to use the AI property assistant.' }, { status: 401 });
+  }
+
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     return Response.json({ error: 'Server AI is not configured yet.' }, { status: 503 });

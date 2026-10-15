@@ -3,6 +3,8 @@
 import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { requireSignedInForAction } from '@/lib/auth/client-session';
+import { SessionGuard } from '@/components/auth/SessionGuard';
 import { 
   MessageSquare, 
   Send, 
@@ -146,8 +148,9 @@ function MessagesContent() {
 
   const activeThread = threads.find((t) => t.id === activeThreadId) || threads[0];
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!await requireSignedInForAction()) return;
     if (!newMessage.trim()) return;
 
     const userMsg: ChatMessage = {
@@ -444,7 +447,7 @@ function MessagesContent() {
 export default function MessagesPage() {
   return (
     <Suspense fallback={<div className="min-h-screen bg-[#0B132B] flex items-center justify-center text-white">Loading messages...</div>}>
-      <MessagesContent />
+      <SessionGuard><MessagesContent /></SessionGuard>
     </Suspense>
   );
 }

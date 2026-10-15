@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { DealRoomItem } from '@/types';
 import { nilvoraStore } from '@/lib/store';
+import { SessionGuard } from '@/components/auth/SessionGuard';
+import { requireSignedInForAction } from '@/lib/auth/client-session';
 import {
   ShieldCheck,
   CheckCircle2,
@@ -58,7 +60,8 @@ function DealRoomContent() {
     return `₹${(val / 100000).toFixed(1)} Lakhs`;
   };
 
-  const handleMilestoneToggle = (milestoneId: string) => {
+  const handleMilestoneToggle = async (milestoneId: string) => {
+    if (!await requireSignedInForAction()) return;
     nilvoraStore.toggleDealMilestone(deal.id, milestoneId);
   };
 
@@ -112,7 +115,7 @@ function DealRoomContent() {
               {deal.milestones.map((m, idx) => (
                 <div
                   key={m.id}
-                  onClick={() => handleMilestoneToggle(m.id)}
+                  onClick={() => void handleMilestoneToggle(m.id)}
                   className={`p-4 rounded-2xl border transition cursor-pointer flex items-start gap-4 ${
                     m.isCompleted
                       ? 'bg-emerald-950/20 border-emerald-500/40 text-emerald-200'
@@ -229,7 +232,7 @@ function DealRoomContent() {
 export default function DealRoomPage() {
   return (
     <React.Suspense fallback={<div className="p-8 text-center text-slate-400">Loading Deal Room...</div>}>
-      <DealRoomContent />
+      <SessionGuard><DealRoomContent /></SessionGuard>
     </React.Suspense>
   );
 }

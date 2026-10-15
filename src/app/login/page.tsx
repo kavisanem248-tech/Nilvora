@@ -119,6 +119,11 @@ function LoginContent() {
   };
 
   const redirectToDashboard = (role: UserRole) => {
+    const returnTo = searchParams.get('returnTo');
+    if (returnTo && returnTo.startsWith('/') && !returnTo.startsWith('//') && !returnTo.includes('\\')) {
+      router.push(returnTo);
+      return;
+    }
     router.push(dashboardPathForRole(role));
   };
 
