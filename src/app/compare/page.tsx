@@ -40,15 +40,14 @@ function CompareContent() {
   const comparedProperties = allProperties.filter((p) => selectedIds.includes(p.id));
 
   const handleAddProperty = (id: string) => {
-    if (id && !selectedIds.includes(id) && selectedIds.length < 4) {
-      setSelectedIds([...selectedIds, id]);
-    }
+    if (!id) return;
+    setSelectedIds((currentIds) =>
+      currentIds.length < 4 && !currentIds.includes(id) ? [...currentIds, id] : currentIds
+    );
   };
 
   const handleRemoveProperty = (id: string) => {
-    if (selectedIds.length > 1) {
-      setSelectedIds(selectedIds.filter((pId) => pId !== id));
-    }
+    setSelectedIds((currentIds) => currentIds.filter((propertyId) => propertyId !== id));
   };
 
   const formatPrice = (price: number) => {
@@ -108,6 +107,15 @@ function CompareContent() {
         </div>
 
         {/* Comparison Table */}
+        {comparedProperties.length === 0 ? (
+          <div className="rounded-2xl border border-slate-700 bg-[#101B33] px-6 py-12 text-center">
+            <Scale className="mx-auto mb-3 h-8 w-8 text-slate-400" />
+            <h2 className="text-lg font-bold text-white">No properties selected</h2>
+            <p className="mt-2 text-sm text-slate-400">
+              Add a property above to start comparing listings.
+            </p>
+          </div>
+        ) : (
         <div className="overflow-x-auto pb-6">
           <table className="w-full border-collapse">
             <thead>
@@ -117,15 +125,16 @@ function CompareContent() {
                 </th>
                 {comparedProperties.map((prop) => (
                   <th key={prop.id} className="p-4 text-left min-w-[280px] bg-[#172642] border-b border-r border-slate-800 relative">
-                    {selectedIds.length > 1 && (
-                      <button
-                        onClick={() => handleRemoveProperty(prop.id)}
-                        className="absolute top-3 right-3 p-1.5 rounded-lg bg-slate-800/80 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 border border-slate-700 transition"
-                        title="Remove from comparison"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveProperty(prop.id)}
+                      aria-label={`Remove ${prop.title} from comparison`}
+                      className="absolute top-3 right-3 inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800/90 px-2 py-1.5 text-xs font-semibold text-slate-300 transition hover:border-rose-500/50 hover:bg-rose-500/20 hover:text-rose-300"
+                      title="Remove from comparison"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      <span>Remove</span>
+                    </button>
 
                     <div className="relative h-36 w-full rounded-xl overflow-hidden mb-3 border border-slate-700">
                       <Image
@@ -367,6 +376,7 @@ function CompareContent() {
             </tbody>
           </table>
         </div>
+        )}
       </div>
 
       {/* Visit Modal */}
