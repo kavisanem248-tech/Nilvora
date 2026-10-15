@@ -181,29 +181,51 @@ export function RolePortalDashboard({ role }: { role: 'seller' | 'broker' | 'adm
   }
 
   return (
-    <main className="min-h-screen bg-white text-slate-900">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-5 py-4">
+    <main className={`min-h-screen text-slate-900 ${role === 'admin' ? 'bg-[#F5F7FB]' : 'bg-white'}`}>
+      <header className={`border-b ${role === 'admin' ? 'border-[#E2E8F0] bg-white shadow-sm' : 'border-slate-200 bg-white'}`}>
+        <div className={`mx-auto flex flex-wrap items-center justify-between gap-4 px-5 sm:px-8 ${role === 'admin' ? 'max-w-[1600px] py-5' : 'max-w-7xl py-4'}`}>
           <div>
-            <Link href="/" className="text-xl font-black tracking-wide">NILVORA</Link>
-            <p className="text-sm text-slate-500">{role === 'admin' ? 'Admin Dashboard' : `${role[0].toUpperCase()}${role.slice(1)} Portal`}</p>
+            <Link href="/" className="text-xl font-black tracking-wide text-[#101B33]">NILVORA</Link>
+            <p className="text-sm text-slate-500">{role === 'admin' ? 'Platform administration' : `${role[0].toUpperCase()}${role.slice(1)} Portal`}</p>
           </div>
           <div className="flex items-center gap-4">
+            {role === 'admin' && (
+              <span className="hidden items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 sm:inline-flex">
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                Secure admin session
+              </span>
+            )}
             {user && <span className="text-sm text-slate-600">{user.fullName}</span>}
-            <button type="button" onClick={() => void logout()} disabled={busy === 'logout'} className="rounded-lg border border-slate-300 px-3 py-2 text-sm hover:bg-slate-50">
+            <button type="button" onClick={() => void logout()} disabled={busy === 'logout'} className={`rounded-lg border px-4 py-2 text-sm font-semibold transition ${role === 'admin' ? 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50' : 'border-slate-300 hover:bg-slate-50'}`}>
               {busy === 'logout' ? 'Signing out…' : 'Logout'}
             </button>
           </div>
         </div>
       </header>
-      <div className="mx-auto grid max-w-7xl gap-6 px-5 py-6 lg:grid-cols-[230px_1fr]">
-        <nav aria-label={`${role} portal navigation`} className="flex flex-wrap content-start gap-2 lg:flex-col">
+      <div className={`mx-auto grid ${role === 'admin' ? 'max-w-[1600px] gap-8 px-5 py-8 sm:px-8 lg:grid-cols-[260px_minmax(0,1fr)]' : 'max-w-7xl gap-6 px-5 py-6 lg:grid-cols-[230px_1fr]'}`}>
+        <nav
+          aria-label={`${role} portal navigation`}
+          className={`flex flex-wrap content-start gap-2 lg:flex-col ${role === 'admin' ? 'h-fit rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm lg:sticky lg:top-6' : ''}`}
+        >
+          {role === 'admin' && (
+            <p className="mb-1 px-2 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">Admin navigation</p>
+          )}
           {navItems.map(([label, href]) => (
-            <a key={label} href={href} className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 hover:border-slate-400 hover:bg-slate-50">{label}</a>
+            <a
+              key={label}
+              href={href}
+              className={`rounded-xl border text-sm transition ${
+                role === 'admin'
+                  ? 'border-transparent px-3.5 py-3 font-medium text-slate-600 hover:border-blue-100 hover:bg-blue-50 hover:text-[#315DE8]'
+                  : 'border-slate-200 px-3 py-2 text-slate-700 hover:border-slate-400 hover:bg-slate-50'
+              }`}
+            >
+              {label}
+            </a>
           ))}
         </nav>
 
-        <section className="min-w-0 space-y-6">
+        <section className={`min-w-0 ${role === 'admin' ? 'space-y-8' : 'space-y-6'}`}>
           {error && <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</div>}
           {message && <div role="status" className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">{message}</div>}
           {role !== 'admin' && user && (
@@ -222,60 +244,67 @@ export function RolePortalDashboard({ role }: { role: 'seller' | 'broker' | 'adm
 
           {role === 'admin' ? (
             <>
-              <section id="reports">
-                <h1 className="mb-3 text-2xl font-bold">Platform overview</h1>
-                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <section id="reports" className="space-y-5">
+                <div className="rounded-3xl border border-[#E2E8F0] bg-white p-6 shadow-sm sm:p-8">
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#315DE8]">NILVORA administration</p>
+                  <h1 className="mt-2 text-3xl font-black tracking-tight text-[#101B33] sm:text-4xl">Platform overview</h1>
+                  <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-500">
+                    Monitor verified revenue, manage accounts and listings, and oversee marketplace operations from one place.
+                  </p>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                   {Object.entries(adminData?.metrics || {}).map(([name, value]) => (
-                    <div key={name} className="rounded-xl border border-slate-200 p-4">
-                      <p className="text-sm capitalize text-slate-500">{name.replace(/[A-Z]/g, (letter) => ` ${letter.toLowerCase()}`)}</p>
-                      <p className="mt-1 text-2xl font-bold">{['totalRevenue', 'monthlyRevenue'].includes(name) ? formatCurrency(value) : value.toLocaleString('en-IN')}</p>
+                    <div key={name} className="min-h-32 rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:p-6">
+                      <p className="text-sm font-medium capitalize text-slate-500">{name.replace(/[A-Z]/g, (letter) => ` ${letter.toLowerCase()}`)}</p>
+                      <p className="mt-3 text-3xl font-black tracking-tight text-[#101B33]">{['totalRevenue', 'monthlyRevenue'].includes(name) ? formatCurrency(value) : value.toLocaleString('en-IN')}</p>
                     </div>
                   ))}
                 </div>
               </section>
-              <section id="revenue" className="space-y-5 rounded-2xl border border-blue-200 bg-blue-50/40 p-5">
-                <div>
-                  <h2 className="text-xl font-bold text-[#101B33]">Revenue dashboard</h2>
-                  <p className="mt-1 text-sm text-slate-600">Revenue includes only provider-verified successful payments. DEMO and unpaid orders are excluded.</p>
+              <section id="revenue" className="space-y-7 rounded-3xl border border-[#E2E8F0] bg-white p-6 shadow-sm sm:p-8">
+                <div className="border-b border-slate-100 pb-5">
+                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#315DE8]">Financial operations</p>
+                  <h2 className="mt-2 text-2xl font-bold text-[#101B33]">Revenue dashboard</h2>
+                  <p className="mt-2 text-sm leading-6 text-slate-500">Revenue includes only provider-verified successful payments. DEMO and unpaid orders are excluded.</p>
                 </div>
-                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                  <Metric label="Verified total revenue" value={formatCurrency(adminData?.metrics?.totalRevenue || 0)} />
-                  <Metric label="Verified revenue this month" value={formatCurrency(adminData?.metrics?.monthlyRevenue || 0)} />
-                  <Metric label="All transaction records" value={adminData?.metrics?.transactions || 0} />
-                  <Metric label="Unpaid DEMO orders" value={adminData?.metrics?.demoOrders || 0} />
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                  <Metric label="Verified total revenue" value={formatCurrency(adminData?.metrics?.totalRevenue || 0)} admin />
+                  <Metric label="Verified revenue this month" value={formatCurrency(adminData?.metrics?.monthlyRevenue || 0)} admin />
+                  <Metric label="All transaction records" value={adminData?.metrics?.transactions || 0} admin />
+                  <Metric label="Unpaid DEMO orders" value={adminData?.metrics?.demoOrders || 0} admin />
                 </div>
-                <div className="grid gap-5 lg:grid-cols-2">
-                  <div className="rounded-xl border border-slate-200 bg-white p-4">
-                    <h3 className="font-semibold">Revenue by account role</h3>
-                    <ul className="mt-3 space-y-2 text-sm">
+                <div className="grid gap-5 xl:grid-cols-2">
+                  <div className="rounded-2xl border border-[#E2E8F0] bg-[#FAFBFD] p-5 sm:p-6">
+                    <h3 className="text-base font-bold text-[#101B33]">Revenue by account role</h3>
+                    <ul className="mt-4 space-y-3 text-sm">
                       {(['buyer', 'seller', 'broker'] as const).map((serviceRole) => (
-                        <li key={serviceRole} className="flex justify-between gap-3 border-b pb-2 last:border-0">
-                          <span className="capitalize">{serviceRole} services</span>
+                        <li key={serviceRole} className="flex justify-between gap-3 border-b border-slate-200 pb-3 last:border-0 last:pb-0">
+                          <span className="capitalize text-slate-600">{serviceRole} services</span>
                           <strong>{formatCurrency(adminData?.revenueByRole?.[serviceRole] || 0)}</strong>
                         </li>
                       ))}
                     </ul>
                   </div>
-                  <div className="rounded-xl border border-slate-200 bg-white p-4">
-                    <h3 className="font-semibold">Revenue by service</h3>
-                    <ul className="mt-3 max-h-48 space-y-2 overflow-y-auto text-sm">
+                  <div className="rounded-2xl border border-[#E2E8F0] bg-[#FAFBFD] p-5 sm:p-6">
+                    <h3 className="text-base font-bold text-[#101B33]">Revenue by service</h3>
+                    <ul className="mt-4 max-h-56 space-y-3 overflow-y-auto pr-2 text-sm">
                       {(adminData?.services || []).map((service) => (
-                        <li key={service.id} className="flex justify-between gap-3 border-b pb-2 last:border-0">
-                          <span>{service.name}</span>
+                        <li key={service.id} className="flex justify-between gap-3 border-b border-slate-200 pb-3 last:border-0 last:pb-0">
+                          <span className="text-slate-600">{service.name}</span>
                           <strong>{formatCurrency(adminData?.revenueByService?.[service.id] || 0)}</strong>
                         </li>
                       ))}
                     </ul>
                   </div>
                 </div>
-                <div className="rounded-xl border border-slate-200 bg-white p-4">
-                  <h3 className="font-semibold">Configurable service prices</h3>
-                  <p className="mt-1 text-xs text-slate-500">Set ₹0 to disable checkout for a service that does not yet have a price.</p>
-                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-2xl border border-[#E2E8F0] bg-white p-5 sm:p-6">
+                  <h3 className="text-base font-bold text-[#101B33]">Configurable service prices</h3>
+                  <p className="mt-1.5 text-sm text-slate-500">Set ₹0 to disable checkout for a service that does not yet have a price.</p>
+                  <div className="mt-5 grid gap-3 sm:grid-cols-2">
                     {(adminData?.services || []).map((service) => (
                       <form
                         key={service.id}
-                        className="flex items-center gap-2 rounded-lg border border-slate-200 p-3"
+                        className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-[#FAFBFD] p-4"
                         onSubmit={(event) => {
                           event.preventDefault();
                           const formData = new FormData(event.currentTarget);
@@ -295,8 +324,8 @@ export function RolePortalDashboard({ role }: { role: 'seller' | 'broker' | 'adm
                   </div>
                 </div>
               </section>
-              <section id="users" className="rounded-2xl border border-slate-200 p-5">
-                <h2 className="mb-4 text-xl font-semibold">Users</h2>
+              <section id="users" className="rounded-3xl border border-[#E2E8F0] bg-white p-6 shadow-sm sm:p-8">
+                <h2 className="mb-5 text-xl font-bold text-[#101B33]">Users</h2>
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[640px] text-left text-sm">
                     <thead><tr className="border-b text-slate-500"><th className="py-2">Name</th><th>Email</th><th>Role</th><th>Change role</th></tr></thead>
@@ -320,9 +349,9 @@ export function RolePortalDashboard({ role }: { role: 'seller' | 'broker' | 'adm
                 onPropertyAction={(propertyId, status) => void submitAdminAction({ action: 'property_status', propertyId, status })}
                 onRemoveReel={(propertyId, reelId) => void submitAdminAction({ action: 'remove_reel', propertyId, reelId })}
               />
-              <LeadTable id="enquiries" leads={leads} />
-              <section className="rounded-2xl border border-slate-200 p-5">
-                <h2 className="mb-3 text-xl font-semibold">Site visit requests</h2>
+              <LeadTable id="enquiries" leads={leads} admin />
+              <section className="rounded-3xl border border-[#E2E8F0] bg-white p-6 shadow-sm sm:p-8">
+                <h2 className="mb-4 text-xl font-bold text-[#101B33]">Site visit requests</h2>
                 {(adminData?.appointments || []).length === 0
                   ? <p className="text-sm text-slate-500">No site visit requests are recorded.</p>
                   : <ul className="space-y-2">{adminData?.appointments?.map((appointment) => <li key={appointment.id} className="rounded-lg border p-3 text-sm">
@@ -331,8 +360,8 @@ export function RolePortalDashboard({ role }: { role: 'seller' | 'broker' | 'adm
                       <p className="text-slate-500">{new Date(appointment.scheduledTime).toLocaleString()} · {appointment.status}</p>
                     </li>)}</ul>}
               </section>
-              <section id="payments" className="rounded-2xl border border-slate-200 p-5">
-                <h2 className="mb-3 text-xl font-semibold">Payment records</h2>
+              <section id="payments" className="rounded-3xl border border-[#E2E8F0] bg-white p-6 shadow-sm sm:p-8">
+                <h2 className="mb-4 text-xl font-bold text-[#101B33]">Payment records</h2>
                 <PaymentTable
                   payments={payments}
                   admin
@@ -341,8 +370,8 @@ export function RolePortalDashboard({ role }: { role: 'seller' | 'broker' | 'adm
                   onRevoke={(id) => void submitAdminAction({ action: 'revoke_service', paymentId: id })}
                 />
               </section>
-              <section className="rounded-2xl border border-slate-200 p-5">
-                <h2 className="mb-3 text-xl font-semibold">Broker verification requests</h2>
+              <section className="rounded-3xl border border-[#E2E8F0] bg-white p-6 shadow-sm sm:p-8">
+                <h2 className="mb-4 text-xl font-bold text-[#101B33]">Broker verification requests</h2>
                 {(payments.filter((payment) => payment.purpose === 'broker_verified_profile' && payment.status === 'successful' && payment.serviceStatus === 'requested')).length === 0
                   ? <p className="text-sm text-slate-600">No paid broker verification requests are awaiting review. Payment alone never grants a verified badge.</p>
                   : <ul className="space-y-3">{payments.filter((payment) => payment.purpose === 'broker_verified_profile' && payment.status === 'successful' && payment.serviceStatus === 'requested').map((payment) => (
@@ -355,16 +384,16 @@ export function RolePortalDashboard({ role }: { role: 'seller' | 'broker' | 'adm
                     </li>
                   ))}</ul>}
               </section>
-              <section className="rounded-2xl border border-slate-200 p-5">
-                <h2 className="mb-3 text-xl font-semibold">Audit log</h2>
+              <section className="rounded-3xl border border-[#E2E8F0] bg-white p-6 shadow-sm sm:p-8">
+                <h2 className="mb-4 text-xl font-bold text-[#101B33]">Audit log</h2>
                 {(adminData?.auditLogs || []).length === 0
                   ? <p className="text-sm text-slate-500">No audit events are recorded.</p>
                   : <ul className="space-y-2">{adminData?.auditLogs?.slice(0, 25).map((entry) => <li key={entry.id} className="border-b pb-2 text-sm last:border-0">
                       <strong>{entry.action}</strong><span className="text-slate-500"> · {entry.resource} · {new Date(entry.timestamp).toLocaleString()}</span>
                     </li>)}</ul>}
               </section>
-              <section id="contacts" className="rounded-2xl border border-slate-200 p-5">
-                <h2 className="text-xl font-semibold">Contact unlocks</h2>
+              <section id="contacts" className="rounded-3xl border border-[#E2E8F0] bg-white p-6 shadow-sm sm:p-8">
+                <h2 className="text-xl font-bold text-[#101B33]">Contact unlocks</h2>
                 {(adminData?.contactUnlocks || []).length === 0 ? <p className="mt-2 text-sm text-slate-600">No verified contact unlocks are recorded.</p> : (
                   <ul className="mt-3 space-y-2 text-sm">
                     {adminData?.contactUnlocks?.map((unlock) => (
@@ -421,8 +450,13 @@ export function RolePortalDashboard({ role }: { role: 'seller' | 'broker' | 'adm
   );
 }
 
-function Metric({ label, value }: { label: string; value: number | string }) {
-  return <div className="rounded-xl border border-slate-200 p-4"><p className="text-sm text-slate-500">{label}</p><p className="mt-1 text-2xl font-bold">{value}</p></div>;
+function Metric({ label, value, admin = false }: { label: string; value: number | string; admin?: boolean }) {
+  return (
+    <div className={`rounded-2xl border ${admin ? 'min-h-28 border-[#E2E8F0] bg-[#FAFBFD] p-5' : 'border-slate-200 p-4'}`}>
+      <p className="text-sm text-slate-500">{label}</p>
+      <p className={`mt-2 font-bold ${admin ? 'text-2xl text-[#101B33]' : 'text-2xl'}`}>{value}</p>
+    </div>
+  );
 }
 
 function PropertyTable({
@@ -445,7 +479,7 @@ function PropertyTable({
   onEdit?: (propertyId: string, updates: { title: string; locality: string; price: number; description: string }) => void;
 }) {
   return (
-    <section id={id} className="rounded-2xl border border-slate-200 p-5">
+    <section id={id} className={`rounded-3xl border ${admin ? 'border-[#E2E8F0] bg-white p-6 shadow-sm sm:p-8' : 'border-slate-200 p-5'}`}>
       <h2 className="mb-4 text-xl font-semibold">{admin ? 'Properties & approvals' : 'Accessible properties'}</h2>
       {properties.length === 0 ? <p className="text-sm text-slate-500">No properties are currently available in this account.</p> : (
         <div className="space-y-3">
@@ -499,9 +533,9 @@ function PropertyTable({
   );
 }
 
-function LeadTable({ id, leads }: { id: string; leads: LeadItem[] }) {
+function LeadTable({ id, leads, admin = false }: { id: string; leads: LeadItem[]; admin?: boolean }) {
   return (
-    <section id={id} className="rounded-2xl border border-slate-200 p-5">
+    <section id={id} className={`rounded-3xl border ${admin ? 'border-[#E2E8F0] bg-white p-6 shadow-sm sm:p-8' : 'border-slate-200 p-5'}`}>
       <h2 className="mb-4 text-xl font-semibold">Active enquiries</h2>
       {leads.length === 0 ? <p className="text-sm text-slate-500">No enquiries are currently recorded.</p> : (
         <ul className="space-y-3">{leads.map((lead) => <li key={lead.id} className="rounded-xl border border-slate-200 p-4">
