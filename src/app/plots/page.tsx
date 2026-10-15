@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { PropertyItem } from '@/types';
 import { nilvoraStore } from '@/lib/store';
 import { DEMO_PROPERTY_IDS } from '@/lib/mock-data';
+import { getPropertyImage } from '@/lib/property-images';
 import PropertyCard from '@/components/ui/PropertyCard';
 import VisitModal from '@/components/ui/VisitModal';
 import { 
@@ -211,7 +212,7 @@ function PlotsContent() {
                     className="group relative rounded-2xl overflow-hidden aspect-[9/14] bg-slate-900 border border-slate-200 hover:border-emerald-500 transition shadow-xl flex flex-col justify-between p-4"
                   >
                     <img
-                      src={reel.thumbnailUrl || plot.images[0]}
+                      src={getPropertyImage(plot)}
                       alt={plot.title}
                       loading="lazy"
                       onError={(event) => {
