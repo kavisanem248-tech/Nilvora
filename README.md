@@ -1,36 +1,31 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## NILVORA
 
-## Getting Started
+NILVORA is the existing real-estate marketplace and role-based property portal built with Next.js.
 
-First, run the development server:
+### Run locally
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The root route redirects to the Buyer Sites page at `/plots`. Sign in at `/login` and select the account's registered role. Buyer, Seller, Broker, and Admin routes are guarded by the active server session.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Admin account
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Admin accounts cannot be created through public registration or demo sign-in. In local development only, you can sign in using the configured username alias (`NILVORA_ADMIN_USERNAME`) and `NILVORA_ADMIN_PASSWORD`; set `NILVORA_ADMIN_EMAIL` to the seeded admin account email. Keep these values in the ignored `.env.local`, never expose them through a `NEXT_PUBLIC_` variable, and replace the default development password before using a shared or deployed environment. Production admin sign-in accepts only the seeded account email and a server-side password of at least 16 characters; the username alias is disabled. Admin role changes are not available through the ordinary user-role editor.
 
-## Learn More
+### Payments
 
-To learn more about Next.js, take a look at the following resources:
+Real payment checkout requires server-side `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, and `RAZORPAY_WEBHOOK_SECRET` settings. If the gateway keys are not configured, checkout creates clearly labeled `DEMO` orders that remain unpaid and do not activate services or count as revenue. Partial gateway configuration is reported as unavailable. Real payments are verified using the Razorpay signature and a server-side captured-payment lookup; webhook confirmation is also supported.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+The service catalog includes configurable buyer, seller, and broker pricing. Admins can change prices in the Revenue Dashboard; a price of ₹0 disables checkout for an unpriced optional service. Sample prices are not transactions. Revenue totals include only verified, non-demo successful payments, and contact details are returned only after a verified buyer contact-unlock payment.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Validate
 
-## Deploy on Vercel
+```bash
+npx tsc --noEmit
+npm run build
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+See the [Next.js documentation](https://nextjs.org/docs) for framework guidance.
