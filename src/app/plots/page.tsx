@@ -154,7 +154,7 @@ function PlotsContent() {
 
           <div className="flex items-center justify-between md:justify-end gap-3">
             <span className="text-xs text-slate-600">
-              Found <strong className="text-slate-900 font-mono">{filteredPlots.length}</strong> plots
+              Found <strong className="text-slate-900 font-mono">{filteredPlots.length}</strong> land listings
             </span>
 
             <select
@@ -256,27 +256,27 @@ function PlotsContent() {
             <div className="max-w-2xl">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-semibold uppercase tracking-wider mb-4">
                 <Compass className="w-3.5 h-3.5" />
-                Residential Sites • Chennai & Suburbs
+                Residential Sites & Agricultural Land • Chennai & Suburbs
               </div>
               <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-slate-900 mb-4">
-                Verified Sites in <span className="text-blue-700">Ambattur & Chennai</span>
+                Land Listings in <span className="text-blue-700">Ambattur & Chennai</span>
               </h1>
               <p className="text-slate-600 text-base md:text-lg leading-relaxed mb-6">
-                Discover verified residential land, layout plots, and independent villa plots with individual Patta, FMB sketch validation, and 30-year Encumbrance Certificate verification.
+                Explore residential layout plots and agricultural land. Demo listings are clearly marked and unverified; independently confirm land classification, title, approvals, price, and availability before making a decision.
               </p>
               
               <div className="flex flex-wrap items-center gap-4 text-xs md:text-sm text-slate-700">
                 <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                  <span>100% On-Ground Boundary Stone Verified</span>
+                  <span>Check boundary details for each listing</span>
                 </div>
                 <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
                   <FileCheck className="w-4 h-4 text-blue-400" />
-                  <span>TNRERA & CMDA Layout Approved</span>
+                  <span>Verify approvals independently</span>
                 </div>
                 <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
                   <ShieldCheck className="w-4 h-4 text-amber-400" />
-                  <span>Ready for Immediate Bank Loan</span>
+                  <span>Confirm financing with your lender</span>
                 </div>
               </div>
             </div>
@@ -363,9 +363,9 @@ function PlotsContent() {
         {filteredPlots.length === 0 ? (
           <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center max-w-lg mx-auto">
             <Layers className="w-12 h-12 text-slate-500 mx-auto mb-4" />
-            <h3 className="text-lg font-bold text-slate-900 mb-2">No Plots Found for Selected Filters</h3>
+            <h3 className="text-lg font-bold text-slate-900 mb-2">No Land Listings Found for Selected Filters</h3>
             <p className="text-sm text-slate-600 mb-6">
-              Try expanding your budget or reset the locality filter to view available CMDA and DTCP residential plots.
+              Try expanding your budget or reset the locality and approval filters to view more land listings.
             </p>
             <button
               onClick={() => {

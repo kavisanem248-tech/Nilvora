@@ -18,6 +18,7 @@ const PLOT_IMAGES: Record<string, string> = {
   'demo-plot-poonamallee-01': 'https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1200&q=80',
   'demo-plot-thirumazhisai-01': 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=1200&q=80',
   'demo-plot-korattur-01': 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80',
+  'demo-plot-agri-redhills-01': 'https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?auto=format&fit=crop&w=1200&q=80',
 };
 
 export function getPropertyTypeImage(propertyType: PropertyType): string {
