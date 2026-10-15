@@ -100,6 +100,82 @@ function PlotsContent() {
 
   return (
     <div className="min-h-screen bg-white text-slate-900">
+      {/* Filter Bar */}
+      <section className="sticky top-16 z-20 bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 md:px-8 py-4">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-slate-200">
+              <MapPin className="w-4 h-4 text-blue-700" />
+              <select
+                value={selectedLocality}
+                onChange={(e) => setSelectedLocality(e.target.value)}
+                className="bg-transparent text-xs text-slate-800 focus:outline-none capitalize"
+                aria-label="Filter by locality"
+              >
+                <option value="all" className="bg-white">All Localities</option>
+                {localities.filter((locality) => locality !== 'all').map((locality) => (
+                  <option key={locality} value={locality} className="bg-white">{locality}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-slate-200">
+              <ShieldCheck className="w-4 h-4 text-emerald-700" />
+              <select
+                value={selectedApproval}
+                onChange={(e) => setSelectedApproval(e.target.value)}
+                className="bg-transparent text-xs text-slate-800 focus:outline-none"
+                aria-label="Filter by approval"
+              >
+                <option value="all" className="bg-white">All Approvals</option>
+                <option value="cmda" className="bg-white">CMDA Approved</option>
+                <option value="dtcp" className="bg-white">DTCP Approved</option>
+              </select>
+            </div>
+
+            <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-slate-200 text-xs">
+              <span className="text-slate-600">Max Budget:</span>
+              <span className="text-blue-700 font-semibold font-mono">
+                {maxBudget >= 10000000 ? `₹${(maxBudget / 10000000).toFixed(2)} Cr` : `₹${(maxBudget / 100000).toFixed(0)} L`}
+              </span>
+              <input
+                type="range"
+                min={2000000}
+                max={30000000}
+                step={500000}
+                value={maxBudget}
+                onChange={(e) => setMaxBudget(Number(e.target.value))}
+                className="w-24 accent-blue-500 cursor-pointer"
+                aria-label="Maximum budget"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between md:justify-end gap-3">
+            <span className="text-xs text-slate-600">
+              Found <strong className="text-slate-900 font-mono">{filteredPlots.length}</strong> plots
+            </span>
+
+            <select
+              value={sortBy}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === 'relevance' || value === 'price_asc' || value === 'price_desc' || value === 'area_desc') {
+                  setSortBy(value);
+                }
+              }}
+              className="bg-white border border-slate-200 text-xs text-slate-800 rounded-xl px-3 py-2 focus:outline-none"
+              aria-label="Sort plots"
+            >
+              <option value="relevance" className="bg-white">Sort: NILVORA Trust Score</option>
+              <option value="price_asc" className="bg-white">Price: Low to High</option>
+              <option value="price_desc" className="bg-white">Price: High to Low</option>
+              <option value="area_desc" className="bg-white">Plot Extent: Largest First</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
       {plotReels.length > 0 && (
         <section className="py-10 bg-white border-b border-black/10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -277,81 +353,6 @@ function PlotsContent() {
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Filter Bar */}
-      <section className="sticky top-16 z-20 bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 md:px-8 py-4">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Locality Selector */}
-            <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-slate-200">
-              <MapPin className="w-4 h-4 text-blue-700" />
-              <select 
-                value={selectedLocality}
-                onChange={(e) => setSelectedLocality(e.target.value)}
-                className="bg-transparent text-xs text-slate-800 focus:outline-none capitalize"
-              >
-                <option value="all" className="bg-white">All Localities</option>
-                {localities.filter(l => l !== 'all').map((loc) => (
-                  <option key={loc} value={loc} className="bg-white">{loc}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Approval Filter */}
-            <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-slate-200">
-              <ShieldCheck className="w-4 h-4 text-emerald-700" />
-              <select 
-                value={selectedApproval}
-                onChange={(e) => setSelectedApproval(e.target.value)}
-                className="bg-transparent text-xs text-slate-800 focus:outline-none"
-              >
-                <option value="all" className="bg-white">All Approvals</option>
-                <option value="cmda" className="bg-white">CMDA Approved</option>
-                <option value="dtcp" className="bg-white">DTCP Approved</option>
-              </select>
-            </div>
-
-            {/* Budget Slider */}
-            <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-slate-200 text-xs">
-              <span className="text-slate-600">Max Budget:</span>
-              <span className="text-blue-700 font-semibold font-mono">
-                {maxBudget >= 10000000 ? `₹${(maxBudget / 10000000).toFixed(2)} Cr` : `₹${(maxBudget / 100000).toFixed(0)} L`}
-              </span>
-              <input 
-                type="range" 
-                min={2000000} 
-                max={30000000} 
-                step={500000}
-                value={maxBudget}
-                onChange={(e) => setMaxBudget(Number(e.target.value))}
-                className="w-24 accent-blue-500 cursor-pointer"
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between md:justify-end gap-3">
-            <span className="text-xs text-slate-600">
-              Found <strong className="text-slate-900 font-mono">{filteredPlots.length}</strong> plots
-            </span>
-
-            <select
-              value={sortBy}
-              onChange={(e) => {
-                const value = e.target.value;
-                if (value === 'relevance' || value === 'price_asc' || value === 'price_desc' || value === 'area_desc') {
-                  setSortBy(value);
-                }
-              }}
-              className="bg-white border border-slate-200 text-xs text-slate-800 rounded-xl px-3 py-2 focus:outline-none"
-            >
-              <option value="relevance" className="bg-white">Sort: NILVORA Trust Score</option>
-              <option value="price_asc" className="bg-white">Price: Low to High</option>
-              <option value="price_desc" className="bg-white">Price: High to Low</option>
-              <option value="area_desc" className="bg-white">Plot Extent: Largest First</option>
-            </select>
           </div>
         </div>
       </section>
